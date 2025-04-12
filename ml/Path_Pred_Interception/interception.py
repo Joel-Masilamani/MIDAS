@@ -1,4 +1,4 @@
-# interception.py
+# interception.py (update for real-time support)
 
 import random
 import math
@@ -31,6 +31,17 @@ def generate_missile_path(start_lat: float, start_lon: float, end_lat: float, en
     lat_step = (end_lat - start_lat) / steps
     lon_step = (end_lon - start_lon) / steps
     return [(start_lat + i * lat_step, start_lon + i * lon_step) for i in range(steps + 1)]
+
+def simulate_missile_trajectory(start_pos: Tuple[float, float], speed: float, heading_deg: float, steps: int = 50) -> List[Tuple[float, float]]:
+    path = [start_pos]
+    lat, lon = start_pos
+    heading_rad = math.radians(heading_deg)
+    for _ in range(steps):
+        lat += math.sin(heading_rad) * speed
+        lon += math.cos(heading_rad) * speed
+        path.append((lat, lon))
+    return path
+
 
 # ---------- Core Simulation Functions ----------
 
@@ -156,9 +167,9 @@ def plot_all_missiles(
         lats, lons = zip(*path)
         plt.plot(lons, lats, linestyle='--', color='red', label='Missile Path' if i == 0 else "")
 
-        if result["success"]:
-            ipt = result["interception_point"]
-            base = result["base"]
+        if result.get("success") and result.get("base"):
+            ipt = result.get("missile_position") or result.get("interception_point")
+            base = result["base"]["coordinates"] if isinstance(result["base"], dict) else result["base"]
             plt.plot([base[1], ipt[1]], [base[0], ipt[0]], color='green', linestyle=':', label='Interceptor Path' if i == 0 else "")
             plt.plot(ipt[1], ipt[0], 'go', markersize=8)
 
