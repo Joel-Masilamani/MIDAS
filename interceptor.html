@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MIDAS Notifications - Final</title>
+
+  <!-- Military-style font -->
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Share Tech Mono', monospace;
+      background-color: #0b1e2d;
+      color: #00eaff;
+      margin: 0;
+      padding: 0;
+    }
+
+    #notification-wrapper {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 340px;
+      max-height: 80vh;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 12px;
+      z-index: 1000;
+    }
+
+    .notification {
+      background-color: rgba(0, 0, 0, 0.15);
+      color: #00eaff;
+      border: 1px solid #00eaff;
+      border-radius: 6px;
+      padding: 15px 20px;
+      box-shadow: 0 0 10px rgba(0, 234, 255, 0.2);
+    }
+
+    .notification-title {
+      font-weight: bold;
+      font-size: 16px;
+      margin-bottom: 6px;
+    }
+
+    .notification-message {
+      font-size: 13px;
+      white-space: normal;
+      word-wrap: break-word;
+      word-break: break-word;
+      margin-bottom: 8px;
+    }
+
+    .intercept-btn {
+      background-color: transparent;
+      color: #00eaff;
+      border: 1px solid #00eaff;
+      padding: 4px 10px;
+      font-size: 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .intercept-btn:hover {
+      background-color: #00eaff;
+      color: #0b1e2d;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div id="notification-wrapper"></div>
+
+  <script>
+    const wrapper = document.getElementById('notification-wrapper');
+
+    function showNotification({ title, message }) {
+      const notif = document.createElement('div');
+      notif.classList.add('notification');
+
+      notif.innerHTML = `
+        <div class="notification-title">${title}</div>
+        <div class="notification-message">${message}</div>
+        <button class="intercept-btn">Intercepted</button>
+      `;
+
+      notif.querySelector('.intercept-btn').addEventListener('click', () => {
+        notif.remove();
+      });
+
+      wrapper.appendChild(notif);
+    }
+
+    function formatNotificationText(missileData, index) {
+      const attempt = missileData.interception_result;
+      const coords = attempt.interception_point;
+      const interceptorTime = attempt.interceptor_time.toFixed(2);
+      const missileTime = attempt.missile_time.toFixed(2);
+      const prob = (attempt.success_probability * 100).toFixed(1);
+      const outcome = attempt.success ? "✔️" : "❌";
+
+      const title = `INTERCEPT – ${attempt.base.name.toUpperCase()} – MISSILE #${missileData.missile_id}`;
+      const message = `@ ${coords[0]}, ${coords[1]} | I: ${interceptorTime}s | M: ${missileTime}s | P: ${prob}% | ${outcome}`;
+      return { title, message };
+    }
+
+    function createAllNotifications(data) {
+      data.forEach((missileData, index) => {
+        const { title, message } = formatNotificationText(missileData, index);
+        setTimeout(() => {
+          showNotification({ title, message });
+        }, index * 600);
+      });
+    }
+
+    // Simulated data (normally from server or generated)
+    const missileSimData = [
+    {
+        "missile_id": 1,
+        "interception_result": {
+            "interception_point": [
+                23.574,
+                79.247
+            ],
+            "base": {
+                "name": "Delhi",
+                "coordinates": [
+                    28.61,
+                    77.21
+                ]
+            },
+            "missile_speed": 2.0,
+            "interceptor_speed": 3.0,
+            "missile_time": 8.14384529875169,
+            "interceptor_time": 1.8107906499034554,
+            "success": true,
+            "risk_score": 5447.000000000003,
+            "success_probability": 0.778,
+            "distance": 5.432371949710366,
+            "method": "monte_carlo"
+        }
+    },
+    {
+        "missile_id": 2,
+        "interception_result": {
+            "interception_point": [
+                24.769,
+                84.945
+            ],
+            "base": {
+                "name": "Delhi",
+                "coordinates": [
+                    28.61,
+                    77.21
+                ]
+            },
+            "missile_speed": 2.0,
+            "interceptor_speed": 3.0,
+            "missile_time": 3.37613129187833,
+            "interceptor_time": 2.8787247562457616,
+            "success": true,
+            "risk_score": 11144.999999999996,
+            "success_probability": 0.147,
+            "distance": 8.636174268737285,
+            "method": "monte_carlo"
+        }
+    },
+    {
+        "missile_id": 3,
+        "interception_result": {
+            "interception_point": [
+                29.155,
+                72.63
+            ],
+            "base": {
+                "name": "Delhi",
+                "coordinates": [
+                    28.61,
+                    77.21
+                ]
+            },
+            "missile_speed": 2.0,
+            "interceptor_speed": 3.0,
+            "missile_time": 3.936907447477015,
+            "interceptor_time": 1.5374374422684285,
+            "success": true,
+            "risk_score": 0,
+            "success_probability": 0.609,
+            "distance": 4.612312326805285,
+            "method": "monte_carlo"
+        }
+    },
+    {
+        "missile_id": 4,
+        "interception_result": {
+            "interception_point": [
+                18.756,
+                79.424
+            ],
+            "base": {
+                "name": "Delhi",
+                "coordinates": [
+                    28.61,
+                    77.21
+                ]
+            },
+            "missile_speed": 2.0,
+            "interceptor_speed": 3.0,
+            "missile_time": 6.142322443506202,
+            "interceptor_time": 3.366553001381549,
+            "success": true,
+            "risk_score": 5624.000000000009,
+            "success_probability": 0.452,
+            "distance": 10.099659004144646,
+            "method": "monte_carlo"
+        }
+    },
+    {
+        "missile_id": 5,
+        "interception_result": {
+            "interception_point": [
+                26.528,
+                87.304
+            ],
+            "base": {
+                "name": "Delhi",
+                "coordinates": [
+                    28.61,
+                    77.21
+                ]
+            },
+            "missile_speed": 2.0,
+            "interceptor_speed": 3.0,
+            "missile_time": 3.8392192240089615,
+            "interceptor_time": 3.435493818620228,
+            "success": true,
+            "risk_score": 13504.000000000005,
+            "success_probability": 0.105,
+            "distance": 10.306481455860684,
+            "method": "monte_carlo"
+        }
+    }
+];
+
+    // Start firing notifications
+    setTimeout(() => {
+      createAllNotifications(missileSimData);
+    }, 1000);
+
+  </script>
+</body>
+</html>
