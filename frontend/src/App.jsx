@@ -182,7 +182,7 @@ function App() {
 
   // Helper to check if a base is actively defending any of the threats
   const defendingBases = missiles
-    .filter(m => m.interception_result && m.interception_result.success)
+    .filter(m => m.interception_result && m.interception_result.success && m.interception_result.base)
     .map(m => m.interception_result.base.name);
 
   return (
