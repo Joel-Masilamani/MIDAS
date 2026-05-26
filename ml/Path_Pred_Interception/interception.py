@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import json
 import warnings
 from missile_generator import generate_missile_data
+from geopy.distance import geodesic
 # ---------- Utility Functions ----------
 
 
@@ -22,7 +23,7 @@ def generate_missile_batch(n: int = 5):
     return missile_batch, missile_info_log
 
 def distance(p1: Tuple[float, float], p2: Tuple[float, float]) -> float:
-    return ((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)**0.5
+    return geodesic(p1, p2).km
 
 def time_to_reach(point: Tuple[float, float], start: Tuple[float, float], speed: float) -> float:
     return distance(start, point) / speed
@@ -90,7 +91,7 @@ def monte_carlo_interception_with_success(
                     all_results.append(result)
 
     successful_results = [r for r in all_results if r["success"]]
-    top_5_results = sorted(successful_results, key=lambda r: r["risk_score"])[:5] if successful_results else []
+    top_5_results = sorted(successful_results, key=lambda r: (r["risk_score"], r["interceptor_time"], r["missile_time"]))[:5] if successful_results else []
     best_result = top_5_results[0] if top_5_results else None
 
     if not top_5_results:
@@ -109,31 +110,19 @@ def run_simulations(
     samples: int = 50,
     sort_for_json: bool = True
 ) -> Tuple[List[dict], Optional[dict]]:
-    results = []
-    for m_speed in missile_speeds:
-        for i_speed in interceptor_speeds:
-            for base in bases:
-                result = monte_carlo_interception_with_success(
-                    path, base, i_speed, m_speed, samples
-                )
-                result.update({
-                    "missile_speed": m_speed,
-                    "interceptor_speed": i_speed
-                })
-                results.append(result)
-
-    successful = [r for r in results if r['success']]
-    successful.sort(key=lambda x: (x['risk_score'], -x['success_probability'], x['missile_time'], x['interceptor_time']))
-    best_result = successful[0] if successful else None
-
+    results, best_result = monte_carlo_interception_with_success(
+        path, bases, missile_speeds, interceptor_speeds, samples
+    )
 
     if sort_for_json:
-        results.sort(key=lambda x: (
-            x["risk_score"] if x["success"] else float('inf'),
-            -x["success_probability"] if x["success"] else 0.0,
-            x["missile_time"] if x["success"] else float('inf'),
-            x["interceptor_time"] if x["success"] else float('inf')
-        ))
+        if results and "warning" in results[0]:
+            pass
+        else:
+            results.sort(key=lambda x: (
+                x["risk_score"] if x.get("success") else float('inf'),
+                x["interceptor_time"] if x.get("success") else float('inf'),
+                x["missile_time"] if x.get("success") else float('inf')
+            ))
 
     return results, best_result
 
